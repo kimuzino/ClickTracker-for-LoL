@@ -154,6 +154,8 @@ void StatReset()
 
     stats << "[HIGHSCORE] :" << "0" << std::endl << "[CLICKS] :" << "0" << std::endl;
     stats.close();
+
+    SetVariables();
 }
 
 int main() 
@@ -185,6 +187,8 @@ int main()
     // Set the values for the variables
     SetVariables();
 
+    Help();
+
     while (true) {
         bool currentState = isProcessRunning(exeName, processId);
 
@@ -201,21 +205,13 @@ int main()
             Sleep(50);
         }
 
-        // PgDN key to see help page
+        // PgDN to reset stats
         if (GetAsyncKeyState(VK_NEXT) & 1)
-        {
-            Help();
-            Sleep(50);
-        }
-
-        // Shift + DEL to reset stats
-        if (GetAsyncKeyState(VK_SHIFT) & 1 && GetAsyncKeyState(VK_DELETE) & 1)
         {
             int ResetMessage = MessageBox(NULL, "Are you sure you want to reset stats?", " ", MB_ICONWARNING | MB_YESNO);
 
             if (ResetMessage == IDYES) {
-                RecreateDLL();
-                SetVariables();
+                StatReset();
                 std::cout << "Stats reseted successfully!" << std::endl;
             }
             else if (ResetMessage == IDNO) {
