@@ -1,6 +1,14 @@
-#include "Headers/include.hpp"
-#include "Headers/SettingsReadChange.hpp"
+#include <iostream>
+#include <fstream>
+#include <windows.h>
+#include <tlhelp32.h>
+#include <chrono>
+#include <filesystem>
+
 const char* File = "Stats.txt";
+
+int TopScore;
+int Clicked;
 
 bool isProcessRunning(const char* processName, DWORD& processId) 
 {
@@ -39,7 +47,7 @@ void printDuration(std::chrono::seconds seconds)
 void addToTextFile(int rightClickCounter) 
 {
     std::ofstream stats;
-    stats.open("stats.dll");
+    stats.open(File);
     std::string line;
 
     Clicked = Clicked + rightClickCounter;
@@ -51,45 +59,31 @@ void addToTextFile(int rightClickCounter)
 
     if (!stats.is_open())
     {
-        std::cout << "Error: stats.dll not found" << std::endl;
+        MessageBox(NULL, "Error while opening file", "File error!", MB_ICONERROR);
     }
 
     stats << "[HIGHSCORE] :" << TopScore << std::endl << "[CLICKS] :" << Clicked << std::endl;
     stats.close();
 }
 
-void RecreateDLL() {
+void RecreateTXT() {
     std::ifstream inFile(File);
-    if (!inFile) {
-        std::cerr << "Error opening the file." << std::endl << "Do you want to create a new file? (y/n)" << std::endl;
-        while (true){
-            if (GetAsyncKeyState(0x59) & 1) {
-                while (!inFile){
-                    std::ofstream outFile(File);
-                    if (outFile.is_open()) {
-                        outFile << std::endl <<"[HIGHSCORE] :" << "0" << std::endl << "[CLICKS] :" << "0";
-                        outFile.close();
-                        std::cout << "File created succesfully" << std::endl;
-                        break;
-                    } else {
-                        std::cerr << "Error opening the file." << std::endl;
-                    }
-                }
+    while (true){
+        while (!inFile){
+            std::ofstream outFile(File);
+            if (outFile.is_open()) {
+                outFile << "[HIGHSCORE] :" << "0" << std::endl << "[CLICKS] :" << "0";
+                outFile.close();
+                std::cout << "File created succesfully" << std::endl;
                 break;
-            }
-
-            if (GetAsyncKeyState(0x4E) & 1) {
-                std::cout << "File not created" << std::endl << "";
-                break;
+            } else {
+                std::cerr << "Error while creating file" << std::endl;
             }
         }
-
-    }
-    else {
-        std::cout << "File found" << std::endl;
+        break;
     }
 }
-// Works
+
 bool CheckTXT()
 {
     std::ifstream TestFile(File);
@@ -103,8 +97,7 @@ bool CheckTXT()
     }
 }
 
-// Works
-void SetVariables()
+void SetVariables() 
 {   
     if (!std::filesystem::exists(File))
     {
@@ -136,7 +129,32 @@ void SetVariables()
     FromFile.close();
 }
 
-//onexit()
+void ReadStats()
+{
+    std::cout << "Highscore: " << TopScore << std::endl << "Total clicks: " << Clicked << std::endl;
+}
+
+void Help()
+{
+    std::cout << "Press PgUP to read stats" << std::endl;
+    std::cout << "Press PgDN to reset stats" << std::endl;
+    std::cout << "Press DELETE to exit" << std::endl;
+}
+
+void StatReset()
+{
+    std::ofstream stats;
+    stats.open(File);
+    std::string line;
+
+    if (!stats.is_open())
+    {
+        MessageBox(NULL, "Error while opening file", "File error!", MB_ICONERROR);
+    }
+
+    stats << "[HIGHSCORE] :" << "0" << std::endl << "[CLICKS] :" << "0" << std::endl;
+    stats.close();
+}
 
 int main() 
 {
@@ -154,28 +172,55 @@ int main()
     // Checks if the txt file exists
     if (!CheckTXT())
     {
-        int txtFileError = MessageBox(NULL, "File not found (Stats.txt)", "Title!", MB_ICONERROR | MB_YESNO);
+        int txtFileError = MessageBox(NULL, "File not found! Press YES to create new", "File error!", MB_ICONERROR | MB_YESNO);
 
         if (txtFileError == IDYES) {
-            RecreateDLL();
+            RecreateTXT();
         }
         else if (txtFileError == IDNO) {
             std::cout << "No" << std::endl;
         }
     }
 
+    // Set the values for the variables
     SetVariables();
-
-    return 0;
 
     while (true) {
         bool currentState = isProcessRunning(exeName, processId);
 
-        // add a hotkey to check if dll is still there
+        // DEL key to exit
+        if (GetAsyncKeyState(VK_DELETE) & 1)
+        {
+            exit(0);
+        }
+        
+        // PgUP key to read stats
+        if (GetAsyncKeyState(VK_PRIOR) & 1)
+        {
+            ReadStats();
+            Sleep(50);
+        }
 
+        // PgDN key to see help page
+        if (GetAsyncKeyState(VK_NEXT) & 1)
+        {
+            Help();
+            Sleep(50);
+        }
 
-        if (GetAsyncKeyState(0x4c) & 1) {
-            std::cout << "Test";
+        // Shift + DEL to reset stats
+        if (GetAsyncKeyState(VK_SHIFT) & 1 && GetAsyncKeyState(VK_DELETE) & 1)
+        {
+            int ResetMessage = MessageBox(NULL, "Are you sure you want to reset stats?", " ", MB_ICONWARNING | MB_YESNO);
+
+            if (ResetMessage == IDYES) {
+                RecreateDLL();
+                SetVariables();
+                std::cout << "Stats reseted successfully!" << std::endl;
+            }
+            else if (ResetMessage == IDNO) {
+                continue;
+            }
         }
 
         if (currentState != previousState) {
@@ -205,3 +250,4 @@ int main()
     return 0;
 }
 
+// average Rightclicks per minute
