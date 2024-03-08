@@ -5,10 +5,15 @@
 #include <chrono>
 #include <filesystem>
 
+#include "Keybinds.cpp"
+
 const char* File = "Stats.txt";
+const char* Settings = "Settings.txt";
 
 int TopScore;
 int Clicked;
+std::string FirstRun;
+
 
 bool isProcessRunning(const char* processName, DWORD& processId) 
 {
@@ -98,12 +103,8 @@ bool CheckTXT()
 }
 
 void SetVariables() 
-{   
-    if (!std::filesystem::exists(File))
-    {
-        std::cerr << "Error: " << File << " not found" << std::endl;
-    }
-
+{ 
+    // Takes the highscore and clicks value
     std::fstream FromFile(File, std::ios::in);
 
     std::string line;
@@ -125,8 +126,27 @@ void SetVariables()
             Clicked = std::stoi(clicksStr);
         }
     }
-
     FromFile.close();
+
+    // Takes all the settings values
+    std::fstream FromSettings(Settings, std::ios::in);
+
+    std::string lineSettings;
+    while (std::getline(FromSettings, lineSettings))
+    {
+        if (lineSettings.find("[FIRST_RUN] :") != std::string::npos)
+        {
+            std::streampos startPos = FromSettings.tellg();
+
+            FirstRun = lineSettings.substr(lineSettings.find(":") + 1);
+            if (FirstRun != "TRUE")
+            {
+                // Resets the settings file
+            }
+
+            // Reads all the keybinds
+        }
+    }
 }
 
 void ReadStats()
@@ -168,8 +188,32 @@ int main()
     int rightClickCounter = 0;
     std::string userInput;
     int rounds = 1;
+    std::string FileCheck;
 
     bool wasRightClickPressed = false;
+
+
+    // If running for the first time creates settings and stats file to not annoy the user with errors
+    if (!std::filesystem::exists(Settings))
+    {
+        std::ofstream outFile(Settings);
+        if (outFile.is_open()) {
+            outFile << "[FIRST_RUN] :TRUE" << "\n";
+            outFile << "[EXIT_KEY] :VK_DELETE" << "\n";
+            outFile << "[STATS_KEY] :VK_PRIOR" << "\n";
+            outFile << "[RESET_KEY] :VK_NEXT" << "\n";
+            outFile.close();
+        }
+
+        if (!std::filesystem::exists(File))
+        {
+            std::ofstream outFile(File);
+            if (outFile.is_open()) {
+                outFile << "[HIGHSCORE] :" << "0" << std::endl << "[CLICKS] :" << "0";
+                outFile.close();
+            }
+        }
+    }
 
     // Checks if the txt file exists
     if (!CheckTXT())
@@ -247,3 +291,4 @@ int main()
 }
 
 // average Rightclicks per minute
+// Create variables to take from Keybind.cpp to change the keybinds
