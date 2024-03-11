@@ -9,13 +9,15 @@
 
 const char* File = "Stats.txt";
 const char* Settings = "Settings.txt";
+const char* HelpFile = "Help.txt";
 
 int TopScore;
 int Clicked;
+
+// Key things
 int ExitKey;
 int StatsKey;
 int ResetKey;
-
 std::string PrintExit;
 std::string PrintStats;
 std::string PrintReset;
@@ -24,16 +26,20 @@ bool isProcessRunning(const char* processName, DWORD& processId)
 {
     HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
-    if (snapshot == INVALID_HANDLE_VALUE) {
+    if (snapshot == INVALID_HANDLE_VALUE)
+    {
         return false;
     }
 
     PROCESSENTRY32 entry;
     entry.dwSize = sizeof(entry);
 
-    if (Process32First(snapshot, &entry)) {
-        do {
-            if (_stricmp(entry.szExeFile, processName) == 0) {
+    if (Process32First(snapshot, &entry))
+    {
+        do
+        {
+            if (_stricmp(entry.szExeFile, processName) == 0)
+            {
                 processId = entry.th32ProcessID;
                 CloseHandle(snapshot);
                 return true;
@@ -51,10 +57,10 @@ void printDuration(std::chrono::seconds seconds)
     auto minutes = std::chrono::duration_cast<std::chrono::minutes>(seconds);
     seconds -= std::chrono::duration_cast<std::chrono::seconds>(minutes);
 
-    std::cout << "Duration: " << minutes.count() << " minutes, " << seconds.count() << " seconds." << std::endl;
+    std::cout << "Duration: " << minutes.count() << " minutes, " << seconds.count() << " seconds." << "\n";
 }
 
-void addToTextFile(int rightClickCounter) 
+void AddStats(int rightClickCounter) 
 {
     std::ofstream stats;
     stats.open(File);
@@ -72,23 +78,29 @@ void addToTextFile(int rightClickCounter)
         MessageBox(NULL, "Error while opening file", "File error!", MB_ICONERROR);
     }
 
-    stats << "[HIGHSCORE] :" << TopScore << std::endl << "[CLICKS] :" << Clicked << std::endl;
+    stats << "[HIGHSCORE] :" << TopScore << "\n" << "[CLICKS] :" << Clicked << "\n";
     stats.close();
 }
 
 void RecreateTXT()
 {
     std::ifstream inFile(File);
-    while (true){
-        while (!inFile){
+    while (true)
+    {
+        while (!inFile)
+        {
             std::ofstream outFile(File);
-            if (outFile.is_open()) {
-                outFile << "[HIGHSCORE] :" << "0" << std::endl << "[CLICKS] :" << "0";
+            if (outFile.is_open())
+            {
+                outFile << "[HIGHSCORE] :" << "0" << "\n" << "[CLICKS] :" << "0";
                 outFile.close();
-                std::cout << "File created succesfully" << std::endl;
+                std::cout << "File created succesfully" << "\n";
                 break;
-            } else {
-                std::cerr << "Error while creating file" << std::endl;
+            }
+            else 
+            {
+                std::cerr << "Error while creating file" << "\n";
+                Sleep(50);
             }
         }
         break;
@@ -188,7 +200,7 @@ void SetKeyState()
 
 void ReadStats()
 {
-    std::cout << "Highscore: " << TopScore << std::endl << "Total clicks: " << Clicked << "\n" << "\n";
+    std::cout << "Highscore: " << TopScore << "\n" << "Total clicks: " << Clicked << "\n" << "\n";
 }
 
 void Help()
@@ -209,7 +221,7 @@ void StatReset()
         MessageBox(NULL, "Error while opening file", "File error!", MB_ICONERROR);
     }
 
-    stats << "[HIGHSCORE] :" << "0" << std::endl << "[CLICKS] :" << "0" << std::endl;
+    stats << "[HIGHSCORE] :" << "0" << "\n" << "[CLICKS] :" << "0" << "\n";
     stats.close();
 
     SetVariables();
@@ -228,13 +240,27 @@ int main()
     std::string FileCheck;
 
     bool wasRightClickPressed = false;
+    bool WasKeyPressed = false;
 
+    // All needed to know how the code calculator works
+    if (!std::filesystem::exists(HelpFile))
+    {
+        std::ofstream CreateHelpFile(HelpFile);
+        if (CreateHelpFile.is_open()) {
+            CreateHelpFile << "All key codes here: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes" << "\n";
+            CreateHelpFile << "Remember to only use the hex value for mapping keys." << "\n";
+            CreateHelpFile << "Shift, Ctrl, Alt, Caps Lock, Windows Key and few other keys isn't supported" << "\n";
+            CreateHelpFile << "You can map more keys by modifying the KeyCodes.cpp file." << "\n";
+            CreateHelpFile.close();
+        }
+    }
 
-    // If running for the first time creates settings and stats file to not annoy the user with errors
+    // Setups settings and creates stats file if needed
     if (!std::filesystem::exists(Settings))
     {
         std::ofstream outFile(Settings);
-        if (outFile.is_open()) {
+        if (outFile.is_open())
+        {
             outFile << "[EXIT_KEY] :0x2E" << "\n";
             outFile << "[STATS_KEY] :0x21" << "\n";
             outFile << "[RESET_KEY] :0x22";
@@ -244,8 +270,9 @@ int main()
         if (!std::filesystem::exists(File))
         {
             std::ofstream outFile(File);
-            if (outFile.is_open()) {
-                outFile << "[HIGHSCORE] :" << "0" << std::endl << "[CLICKS] :" << "0";
+            if (outFile.is_open())
+            {
+                outFile << "[HIGHSCORE] :" << "0" << "\n" << "[CLICKS] :" << "0";
                 outFile.close();
             }
         }
@@ -256,11 +283,13 @@ int main()
     {
         int txtFileError = MessageBox(NULL, "File not found! Press YES to create new", "File error!", MB_ICONERROR | MB_YESNO);
 
-        if (txtFileError == IDYES) {
+        if (txtFileError == IDYES)
+        {
             RecreateTXT();
         }
-        else if (txtFileError == IDNO) {
-            std::cout << "No" << std::endl;
+        else if (txtFileError == IDNO)
+        {
+            std::cout << "No" << "\n";
         }
     }
 
@@ -277,16 +306,17 @@ int main()
         {
             exit(0);
         }
-        
-        if (GetAsyncKeyState(StatsKey) & 1)
+    
+        bool IsKeyPressed = (GetAsyncKeyState(StatsKey) & 0x8001) != 0;
+        if (WasKeyPressed && !IsKeyPressed) 
         {
             ReadStats();
-            Sleep(50);
         }
+        WasKeyPressed = IsKeyPressed;
 
         if (GetAsyncKeyState(ResetKey) & 1)
         {
-            int ResetMessage = MessageBox(NULL, "Are you sure you want to reset stats?", " ", MB_ICONWARNING | MB_YESNO);
+            int ResetMessage = MessageBox(NULL, "Are you sure you want to reset stats?", "Confirm!", MB_ICONWARNING | MB_YESNO);
 
             if (ResetMessage == IDYES) {
                 StatReset();
@@ -297,25 +327,30 @@ int main()
             }
         }
 
-        if (currentState != previousState) {
-            if (currentState) {
-                std::cout << "Game (" << rounds << ") has started." << std::endl;
+        if (currentState != previousState)
+        {
+            if (currentState)
+            {
+                std::cout << "Game (" << rounds << ") has started." << "\n";
                 startTime = std::chrono::steady_clock::now();
                 rightClickCounter = 0;
-            } else {
+            } 
+            else
+            {
                 auto endTime = std::chrono::steady_clock::now();
                 auto duration = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime);
-                std::cout << "Game has ended." << std::endl;
+                std::cout << "Game has ended." << "\n";
                 printDuration(duration);
-                std::cout << "Total right clicks: " << rightClickCounter << std::endl << std::endl;
+                std::cout << "Total right clicks: " << rightClickCounter << "\n";
                 rounds++;
-                addToTextFile(rightClickCounter);
+                AddStats(rightClickCounter);
             }
             previousState = currentState;
         }
 
         bool isRightClickPressed = (GetAsyncKeyState(VK_RBUTTON) & 0x8001) != 0;
-        if (wasRightClickPressed && !isRightClickPressed) {
+        if (wasRightClickPressed && !isRightClickPressed)
+        {
             rightClickCounter++;
         }
 
