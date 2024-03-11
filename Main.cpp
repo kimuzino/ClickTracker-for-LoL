@@ -9,7 +9,7 @@
 
 const char* File = "Stats.txt";
 const char* Settings = "Settings.txt";
-const char* HelpFile = "Help.txt";
+const char* ReadmeFile = "Readme.txt";
 
 int TopScore;
 int Clicked;
@@ -243,15 +243,15 @@ int main()
     bool WasKeyPressed = false;
 
     // All needed to know how the code calculator works
-    if (!std::filesystem::exists(HelpFile))
+    if (!std::filesystem::exists(ReadmeFile))
     {
-        std::ofstream CreateHelpFile(HelpFile);
-        if (CreateHelpFile.is_open()) {
-            CreateHelpFile << "All key codes here: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes" << "\n";
-            CreateHelpFile << "Remember to only use the hex value for mapping keys." << "\n";
-            CreateHelpFile << "Shift, Ctrl, Alt, Caps Lock, Windows Key and few other keys isn't supported" << "\n";
-            CreateHelpFile << "You can map more keys by modifying the KeyCodes.cpp file." << "\n";
-            CreateHelpFile.close();
+        std::ofstream CreateReadmeFile(ReadmeFile);
+        if (CreateReadmeFile.is_open()) {
+            CreateReadmeFile << "All key codes here: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes" << "\n";
+            CreateReadmeFile << "Remember to only use the hex value for mapping keys." << "\n";
+            CreateReadmeFile << "Shift, Ctrl, Alt, Caps Lock, Windows Key and few other keys isn't supported" << "\n";
+            CreateReadmeFile << "You can map more keys by modifying the KeyCodes.cpp file." << "\n";
+            CreateReadmeFile.close();
         }
     }
 
