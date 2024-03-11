@@ -249,7 +249,7 @@ int main()
         if (CreateReadmeFile.is_open()) {
             CreateReadmeFile << "All key codes here: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes" << "\n";
             CreateReadmeFile << "Remember to only use the hex value for mapping keys." << "\n";
-            CreateReadmeFile << "Shift, Ctrl, Alt, Caps Lock, Windows Key and few other keys isn't supported" << "\n";
+            CreateReadmeFile << "Shift, Ctrl, Alt, Caps Lock, Windows Key and few other keys isn't supported." << "\n";
             CreateReadmeFile << "You can map more keys by modifying the KeyCodes.cpp file." << "\n";
             CreateReadmeFile.close();
         }
