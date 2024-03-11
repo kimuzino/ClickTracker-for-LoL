@@ -200,14 +200,14 @@ void SetKeyState()
 
 void ReadStats()
 {
-    std::cout << "Highscore: " << TopScore << "\n" << "Total clicks: " << Clicked << "\n" << "\n";
+    std::cout << "\n" << "Highscore: " << TopScore << "\n" << "Total clicks: " << Clicked << "\n";
 }
 
 void Help()
 {
     std::cout << "Press " << PrintStats << " to read stats" << "\n";
     std::cout << "Press " << PrintReset << " to reset stats" << "\n";
-    std::cout << "Press " << PrintExit << " to exit" << "\n" << "\n";
+    std::cout << "Press " << PrintExit << " to exit" << "\n";
 }
 
 void StatReset()
@@ -320,7 +320,7 @@ int main()
 
             if (ResetMessage == IDYES) {
                 StatReset();
-                std::cout << "Stats reseted successfully!" << "\n" << "\n";
+                std::cout << "\n" << "Stats reseted successfully!" << "\n";
             }
             else if (ResetMessage == IDNO) {
                 continue;
@@ -331,7 +331,7 @@ int main()
         {
             if (currentState)
             {
-                std::cout << "Game (" << rounds << ") has started." << "\n";
+                std::cout << "\n" << "Game (" << rounds << ") has started." << "\n";
                 startTime = std::chrono::steady_clock::now();
                 rightClickCounter = 0;
             } 
