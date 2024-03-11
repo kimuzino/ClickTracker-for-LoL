@@ -5,15 +5,20 @@
 #include <chrono>
 #include <filesystem>
 
-#include "Keybinds.cpp"
+#include "KeyCodes.cpp"
 
 const char* File = "Stats.txt";
 const char* Settings = "Settings.txt";
 
 int TopScore;
 int Clicked;
-std::string FirstRun;
+int ExitKey;
+int StatsKey;
+int ResetKey;
 
+std::string PrintExit;
+std::string PrintStats;
+std::string PrintReset;
 
 bool isProcessRunning(const char* processName, DWORD& processId) 
 {
@@ -71,7 +76,8 @@ void addToTextFile(int rightClickCounter)
     stats.close();
 }
 
-void RecreateTXT() {
+void RecreateTXT()
+{
     std::ifstream inFile(File);
     while (true){
         while (!inFile){
@@ -127,38 +133,69 @@ void SetVariables()
         }
     }
     FromFile.close();
+}
 
-    // Takes all the settings values
+void SetKeyState()
+{
+    std::string FindReset;
+    std::string FindExit;
+    std::string FindStats;
+
     std::fstream FromSettings(Settings, std::ios::in);
 
-    std::string lineSettings;
-    while (std::getline(FromSettings, lineSettings))
+    while (std::getline(FromSettings, FindReset))
     {
-        if (lineSettings.find("[FIRST_RUN] :") != std::string::npos)
+        if (FindReset.find("[RESET_KEY] :") != std::string::npos)
         {
             std::streampos startPos = FromSettings.tellg();
 
-            FirstRun = lineSettings.substr(lineSettings.find(":") + 1);
-            if (FirstRun != "TRUE")
-            {
-                // Resets the settings file
-            }
-
-            // Reads all the keybinds
+            std::string resetStr = FindReset.substr(FindReset.find(":") + 1);
+            ResetKey = keyMap[resetStr];
+            PrintReset = KeyToText[resetStr];
         }
     }
+    FromSettings.close();
+    std::fstream FroSettings(Settings, std::ios::in);
+
+    while (std::getline(FroSettings, FindExit))
+    {
+        if (FindExit.find("[EXIT_KEY] :") != std::string::npos)
+        {
+            std::streampos startPos = FroSettings.tellg();
+
+            std::string exitStr = FindExit.substr(FindExit.find(":") + 1);
+            ExitKey = keyMap[exitStr];
+            PrintExit = KeyToText[exitStr];
+        }
+    }
+    FroSettings.close();
+
+    std::fstream FrSettings(Settings, std::ios::in);
+
+    while (std::getline(FrSettings, FindStats))
+    {
+        if (FindStats.find("[STATS_KEY] :") != std::string::npos)
+        {
+            std::streampos startPos = FrSettings.tellg();
+
+            std::string statsStr = FindStats.substr(FindStats.find(":") + 1);
+            StatsKey = keyMap[statsStr];
+            PrintStats = KeyToText[statsStr];
+        }
+    }
+    FrSettings.close();
 }
 
 void ReadStats()
 {
-    std::cout << "Highscore: " << TopScore << std::endl << "Total clicks: " << Clicked << std::endl;
+    std::cout << "Highscore: " << TopScore << std::endl << "Total clicks: " << Clicked << "\n" << "\n";
 }
 
 void Help()
 {
-    std::cout << "Press PgUP to read stats" << std::endl;
-    std::cout << "Press PgDN to reset stats" << std::endl;
-    std::cout << "Press DELETE to exit" << std::endl;
+    std::cout << "Press " << PrintStats << " to read stats" << "\n";
+    std::cout << "Press " << PrintReset << " to reset stats" << "\n";
+    std::cout << "Press " << PrintExit << " to exit" << "\n" << "\n";
 }
 
 void StatReset()
@@ -198,10 +235,9 @@ int main()
     {
         std::ofstream outFile(Settings);
         if (outFile.is_open()) {
-            outFile << "[FIRST_RUN] :TRUE" << "\n";
-            outFile << "[EXIT_KEY] :VK_DELETE" << "\n";
-            outFile << "[STATS_KEY] :VK_PRIOR" << "\n";
-            outFile << "[RESET_KEY] :VK_NEXT" << "\n";
+            outFile << "[EXIT_KEY] :0x2E" << "\n";
+            outFile << "[STATS_KEY] :0x21" << "\n";
+            outFile << "[RESET_KEY] :0x22";
             outFile.close();
         }
 
@@ -228,35 +264,33 @@ int main()
         }
     }
 
-    // Set the values for the variables
+    // Sets important values
     SetVariables();
+    SetKeyState();
 
     Help();
 
     while (true) {
         bool currentState = isProcessRunning(exeName, processId);
 
-        // DEL key to exit
-        if (GetAsyncKeyState(VK_DELETE) & 1)
+        if (GetAsyncKeyState(ExitKey) & 1)
         {
             exit(0);
         }
         
-        // PgUP key to read stats
-        if (GetAsyncKeyState(VK_PRIOR) & 1)
+        if (GetAsyncKeyState(StatsKey) & 1)
         {
             ReadStats();
             Sleep(50);
         }
 
-        // PgDN to reset stats
-        if (GetAsyncKeyState(VK_NEXT) & 1)
+        if (GetAsyncKeyState(ResetKey) & 1)
         {
             int ResetMessage = MessageBox(NULL, "Are you sure you want to reset stats?", " ", MB_ICONWARNING | MB_YESNO);
 
             if (ResetMessage == IDYES) {
                 StatReset();
-                std::cout << "Stats reseted successfully!" << std::endl;
+                std::cout << "Stats reseted successfully!" << "\n" << "\n";
             }
             else if (ResetMessage == IDNO) {
                 continue;
@@ -291,4 +325,3 @@ int main()
 }
 
 // average Rightclicks per minute
-// Create variables to take from Keybind.cpp to change the keybinds
