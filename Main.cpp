@@ -87,44 +87,6 @@ void AddStats(int rightClickCounter)
     stats.close();
 }
 
-void RecreateTXT()
-{
-    std::ifstream inFile(File);
-    while (true)
-    {
-        while (!inFile)
-        {
-            std::ofstream outFile(File);
-            if (outFile.is_open())
-            {
-                outFile << "[HIGHSCORE] :" << "0" << "\n" << "[CLICKS] :" << "0";
-                outFile.close();
-                std::cout << "File created succesfully" << "\n";
-                break;
-            }
-            else 
-            {
-                std::cerr << "Error while creating file" << "\n";
-                Sleep(50);
-            }
-        }
-        break;
-    }
-}
-
-bool CheckTXT()
-{
-    std::ifstream TestFile(File);
-    if (!TestFile)
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
-}
-
 void SetVariables() 
 { 
     // Takes the highscore and clicks value
@@ -203,18 +165,6 @@ void SetKeyState()
     FrSettings.close();
 }
 
-void ReadStats()
-{
-    std::cout << "\n" << "Highscore: " << TopScore << "\n" << "Total clicks: " << Clicked << "\n";
-}
-
-void Help()
-{
-    std::cout << "Press " << PrintStats << " to read stats" << "\n";
-    std::cout << "Press " << PrintReset << " to reset stats" << "\n";
-    std::cout << "Press " << PrintExit << " to exit" << "\n";
-}
-
 void StatReset()
 {
     std::ofstream stats;
@@ -271,13 +221,33 @@ void CreateFiles()
     }
 
     // Checks if the txt file exists
-    if (!CheckTXT())
+    if (!std::filesystem::exists(File))
     {
         int txtFileError = MessageBox(NULL, "File not found! Press YES to create new", "File error!", MB_ICONERROR | MB_YESNO);
 
         if (txtFileError == IDYES)
         {
-            RecreateTXT();
+            std::ifstream inFile(File);
+            while (true)
+            {
+                while (!inFile)
+                {
+                    std::ofstream outFile(File);
+                    if (outFile.is_open())
+                    {
+                        outFile << "[HIGHSCORE] :" << "0" << "\n" << "[CLICKS] :" << "0";
+                        outFile.close();
+                        std::cout << "File created succesfully" << "\n";
+                        break;
+                    }
+                    else 
+                    {
+                        std::cerr << "Error while creating file" << "\n";
+                        Sleep(50);
+                    }
+                }
+                break;
+            }
         }
         else if (txtFileError == IDNO)
         {
@@ -305,7 +275,10 @@ int main()
     SetVariables();
     SetKeyState();
 
-    Help();
+    // Binds
+    std::cout << "Press " << PrintStats << " to read stats" << "\n";
+    std::cout << "Press " << PrintReset << " to reset stats" << "\n";
+    std::cout << "Press " << PrintExit << " to exit" << "\n";
 
     while (true) {
         bool currentState = isProcessRunning(exeName, processId);
@@ -320,7 +293,7 @@ int main()
         bool IsKeyPressed = (GetAsyncKeyState(StatsKey) & 0x8001) != 0;
         if (WasKeyPressed && !IsKeyPressed) 
         {
-            ReadStats();
+            std::cout << "\n" << "Highscore: " << TopScore << "\n" << "Total clicks: " << Clicked << "\n";
         }
         WasKeyPressed = IsKeyPressed;
 
@@ -366,7 +339,6 @@ int main()
         {
             rightClickCounter++;
         }
-
         wasRightClickPressed = isRightClickPressed;
     }
     return 0;
