@@ -7,10 +7,15 @@
 
 #include "KeyCodes.cpp"
 
+// Files
 const char* File = "Stats.txt";
 const char* Settings = "Settings.txt";
-const char* ReadmeFile = "Readme.txt";
+const char* HowToUseFile = "HowToUse.txt";
 
+// Game
+const char* exeName = "League of Legends.exe";
+
+// Stats
 int TopScore;
 int Clicked;
 
@@ -227,31 +232,18 @@ void StatReset()
     SetVariables();
 }
 
-int main() 
+void CreateFiles()
 {
-    const char* exeName = "League of Legends.exe";
-
-    DWORD processId = 0;
-    bool previousState = false;
-    auto startTime = std::chrono::steady_clock::now();
-    int rightClickCounter = 0;
-    std::string userInput;
-    int rounds = 1;
-    std::string FileCheck;
-
-    bool wasRightClickPressed = false;
-    bool WasKeyPressed = false;
-
     // All needed to know how the code calculator works
-    if (!std::filesystem::exists(ReadmeFile))
+    if (!std::filesystem::exists(HowToUseFile))
     {
-        std::ofstream CreateReadmeFile(ReadmeFile);
-        if (CreateReadmeFile.is_open()) {
-            CreateReadmeFile << "All key codes here: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes" << "\n";
-            CreateReadmeFile << "Remember to only use the hex value for mapping keys." << "\n";
-            CreateReadmeFile << "Shift, Ctrl, Alt, Caps Lock, Windows Key and few other keys isn't supported." << "\n";
-            CreateReadmeFile << "You can map more keys by modifying the KeyCodes.cpp file." << "\n";
-            CreateReadmeFile.close();
+        std::ofstream CreateHowToUseFile(HowToUseFile);
+        if (CreateHowToUseFile.is_open()) {
+            CreateHowToUseFile << "All key codes here: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes" << "\n";
+            CreateHowToUseFile << "Remember to only use the hex value for mapping keys." << "\n";
+            CreateHowToUseFile << "Shift, Ctrl, Alt, Caps Lock, Windows Key and few other keys isn't supported." << "\n";
+            CreateHowToUseFile << "You can map more keys by modifying the KeyCodes.cpp file." << "\n";
+            CreateHowToUseFile.close();
         }
     }
 
@@ -292,8 +284,24 @@ int main()
             std::cout << "No" << "\n";
         }
     }
+}
 
-    // Sets important values
+int main() 
+{
+    DWORD processId = 0;
+    auto startTime = std::chrono::steady_clock::now();
+    int rightClickCounter = 0;
+    int rounds = 1;
+
+    // States
+    bool previousState = false;
+    bool wasRightClickPressed = false;
+    bool WasKeyPressed = false;
+
+    // Checks / creates files
+    CreateFiles();
+
+    // Sets keys and stats
     SetVariables();
     SetKeyState();
 
@@ -302,11 +310,13 @@ int main()
     while (true) {
         bool currentState = isProcessRunning(exeName, processId);
 
+        // Exit function
         if (GetAsyncKeyState(ExitKey) & 1)
         {
             exit(0);
         }
     
+        // ReadStats function
         bool IsKeyPressed = (GetAsyncKeyState(StatsKey) & 0x8001) != 0;
         if (WasKeyPressed && !IsKeyPressed) 
         {
@@ -314,6 +324,7 @@ int main()
         }
         WasKeyPressed = IsKeyPressed;
 
+        // ResetStats function
         if (GetAsyncKeyState(ResetKey) & 1)
         {
             int ResetMessage = MessageBox(NULL, "Are you sure you want to reset stats?", "Confirm!", MB_ICONWARNING | MB_YESNO);
@@ -327,6 +338,7 @@ int main()
             }
         }
 
+        // Main code
         if (currentState != previousState)
         {
             if (currentState)
@@ -348,6 +360,7 @@ int main()
             previousState = currentState;
         }
 
+        // Right click counter
         bool isRightClickPressed = (GetAsyncKeyState(VK_RBUTTON) & 0x8001) != 0;
         if (wasRightClickPressed && !isRightClickPressed)
         {
@@ -358,5 +371,3 @@ int main()
     }
     return 0;
 }
-
-// average Rightclicks per minute
