@@ -4,6 +4,7 @@
 #include <tlhelp32.h>
 #include <chrono>
 #include <filesystem>
+#include <thread>
 
 #include "KeyCodes.cpp"
 
@@ -14,6 +15,8 @@ const char* HowToUseFile = "HowToUse.txt";
 
 // Game
 const char* exeName = "League of Legends.exe";
+// Client
+const char* clientName = "LeagueClient.exe";
 
 // Stats
 int TopScore;
@@ -258,7 +261,15 @@ void CreateFiles()
 
 int main() 
 {
-    DWORD processId = 0;
+    #define IDI_ICON 101
+    #define IDI_SMALL 102
+    
+    HINSTANCE hInstance = GetModuleHandle(NULL);
+    HICON hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON));
+    HICON hIconSm = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_SMALL));
+
+    DWORD GameId = 0;
+    DWORD ClientId = 0;
     auto startTime = std::chrono::steady_clock::now();
     int rightClickCounter = 0;
     int rounds = 1;
@@ -280,8 +291,8 @@ int main()
     std::cout << "Press " << PrintReset << " to reset stats" << "\n";
     std::cout << "Press " << PrintExit << " to exit" << "\n";
 
-    while (true) {
-        bool currentState = isProcessRunning(exeName, processId);
+    while (isProcessRunning(clientName, ClientId) == true) {
+        bool currentState = isProcessRunning(exeName, GameId);
 
         // Exit function
         if (GetAsyncKeyState(ExitKey) & 1)
@@ -341,5 +352,4 @@ int main()
         }
         wasRightClickPressed = isRightClickPressed;
     }
-    return 0;
 }
