@@ -8,20 +8,6 @@
 
 #include "KeyCodes.cpp"
 
-// Files
-const char* File = "Stats.txt";
-const char* Settings = "Settings.txt";
-const char* HowToUseFile = "HowToUse.txt";
-
-// Game
-const char* exeName = "League of Legends.exe";
-// Client
-const char* clientName = "LeagueClient.exe";
-
-// Stats
-int TopScore;
-int Clicked;
-
 // Key things
 int ExitKey;
 int StatsKey;
@@ -68,10 +54,10 @@ void printDuration(std::chrono::seconds seconds)
     std::cout << "Duration: " << minutes.count() << " minutes, " << seconds.count() << " seconds." << "\n";
 }
 
-void AddStats(int rightClickCounter) 
+void AddStats(int rightClickCounter, const char* Stats, int Clicked, int TopScore) 
 {
     std::ofstream stats;
-    stats.open(File);
+    stats.open(Stats);
     std::string line;
 
     Clicked = Clicked + rightClickCounter;
@@ -90,11 +76,10 @@ void AddStats(int rightClickCounter)
     stats.close();
 }
 
-void SetVariables() 
+int SetVariables(const char* Stats, int TopScore, int Clicked) 
 { 
     // Takes the highscore and clicks value
-    std::fstream FromFile(File, std::ios::in);
-
+    std::fstream FromFile(Stats, std::ios::in);
     std::string line;
     while (std::getline(FromFile, line))
     {
@@ -115,9 +100,11 @@ void SetVariables()
         }
     }
     FromFile.close();
+
+    return TopScore, Clicked;
 }
 
-void SetKeyState()
+void SetKeyState(const char* Settings)
 {
     std::string FindReset;
     std::string FindExit;
@@ -168,10 +155,10 @@ void SetKeyState()
     FrSettings.close();
 }
 
-void StatReset()
+int StatReset(const char* Stats, int TopScore, int Clicked)
 {
     std::ofstream stats;
-    stats.open(File);
+    stats.open(Stats);
     std::string line;
 
     if (!stats.is_open())
@@ -182,10 +169,12 @@ void StatReset()
     stats << "[HIGHSCORE] :" << "0" << "\n" << "[CLICKS] :" << "0" << "\n";
     stats.close();
 
-    SetVariables();
+    TopScore = 0;
+    Clicked = 0;
+    return Clicked, TopScore;
 }
 
-void CreateFiles()
+void CreateFiles(const char* Stats, const char* Settings, const char* HowToUseFile)
 {
     // All needed to know how the code calculator works
     if (!std::filesystem::exists(HowToUseFile))
@@ -212,9 +201,9 @@ void CreateFiles()
             outFile.close();
         }
 
-        if (!std::filesystem::exists(File))
+        if (!std::filesystem::exists(Stats))
         {
-            std::ofstream outFile(File);
+            std::ofstream outFile(Stats);
             if (outFile.is_open())
             {
                 outFile << "[HIGHSCORE] :" << "0" << "\n" << "[CLICKS] :" << "0";
@@ -224,18 +213,18 @@ void CreateFiles()
     }
 
     // Checks if the txt file exists
-    if (!std::filesystem::exists(File))
+    if (!std::filesystem::exists(Stats))
     {
         int txtFileError = MessageBox(NULL, "File not found! Press YES to create new", "File error!", MB_ICONERROR | MB_YESNO);
 
         if (txtFileError == IDYES)
         {
-            std::ifstream inFile(File);
+            std::ifstream inFile(Stats);
             while (true)
             {
                 while (!inFile)
                 {
-                    std::ofstream outFile(File);
+                    std::ofstream outFile(Stats);
                     if (outFile.is_open())
                     {
                         outFile << "[HIGHSCORE] :" << "0" << "\n" << "[CLICKS] :" << "0";
@@ -263,13 +252,21 @@ int main()
 {
     #define IDI_ICON 101
     #define IDI_SMALL 102
-    
+    // Icon
     HINSTANCE hInstance = GetModuleHandle(NULL);
     HICON hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON));
     HICON hIconSm = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
+    // Game and client id
     DWORD GameId = 0;
     DWORD ClientId = 0;
+
+    // Game
+    const char* exeName = "League of Legends.exe";
+    // Client
+    const char* clientName = "LeagueClient.exe";
+
+    // Useless
     auto startTime = std::chrono::steady_clock::now();
     int rightClickCounter = 0;
     int rounds = 1;
@@ -279,12 +276,21 @@ int main()
     bool wasRightClickPressed = false;
     bool WasKeyPressed = false;
 
+    // Files
+    const char* Stats = "Stats.txt";
+    const char* Settings = "Settings.txt";
+    const char* HowToUseFile = "HowToUse.txt";
+
+    // Stats
+    int TopScore = 0;
+    int Clicked = 0;
+
     // Checks / creates files
-    CreateFiles();
+    CreateFiles(Stats, Settings, HowToUseFile);
 
     // Sets keys and stats
-    SetVariables();
-    SetKeyState();
+    SetVariables(Stats, TopScore, Clicked);
+    SetKeyState(Settings);
 
     // Binds
     std::cout << "Press " << PrintStats << " to read stats" << "\n";
@@ -313,11 +319,13 @@ int main()
         {
             int ResetMessage = MessageBox(NULL, "Are you sure you want to reset stats?", "Confirm!", MB_ICONWARNING | MB_YESNO);
 
-            if (ResetMessage == IDYES) {
-                StatReset();
+            if (ResetMessage == IDYES)
+            {
+                StatReset(Stats, TopScore, Clicked);
                 std::cout << "\n" << "Stats reseted successfully!" << "\n";
             }
-            else if (ResetMessage == IDNO) {
+            else if (ResetMessage == IDNO)
+            {
                 continue;
             }
         }
@@ -339,7 +347,7 @@ int main()
                 printDuration(duration);
                 std::cout << "Total right clicks: " << rightClickCounter << "\n";
                 rounds++;
-                AddStats(rightClickCounter);
+                AddStats(rightClickCounter, Stats, Clicked, TopScore);
             }
             previousState = currentState;
         }
