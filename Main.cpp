@@ -46,7 +46,7 @@ bool isProcessRunning(const char* processName, DWORD& processId)
 
 }
 
-void printDuration(std::chrono::seconds seconds) 
+void printGameDuration(std::chrono::seconds seconds) 
 {
     auto minutes = std::chrono::duration_cast<std::chrono::minutes>(seconds);
     seconds -= std::chrono::duration_cast<std::chrono::seconds>(minutes);
@@ -65,6 +65,7 @@ void AddStats(int rightClickCounter, const char* Stats, int Clicked, int TopScor
     if (TopScore < rightClickCounter)
     {
         TopScore = rightClickCounter;
+        std::cout << "New highscore achieved!" << "\n";
     }
 
     if (!stats.is_open())
@@ -76,32 +77,40 @@ void AddStats(int rightClickCounter, const char* Stats, int Clicked, int TopScor
     stats.close();
 }
 
-int SetVariables(const char* Stats, int TopScore, int Clicked) 
+int SetVariables(const char* Stats, int SWITCH) 
 { 
+    int Value;
     // Takes the highscore and clicks value
     std::fstream FromFile(Stats, std::ios::in);
     std::string line;
     while (std::getline(FromFile, line))
     {
-        if (line.find("[HIGHSCORE] :") != std::string::npos)
+        if (SWITCH == 1)
         {
-            std::streampos startPos = FromFile.tellg();
+            if (line.find("[HIGHSCORE] :") != std::string::npos)
+            {
+                std::streampos startPos = FromFile.tellg();
 
-            std::string highscoreStr = line.substr(line.find(":") + 1);
-            TopScore = std::stoi(highscoreStr);
+                std::string highscoreStr = line.substr(line.find(":") + 1);
+                Value = std::stoi(highscoreStr);
+            }
         }
 
-        if (line.find("[CLICKS] :") != std::string::npos)
+        if (SWITCH == 2)
         {
-            std::streampos startPos = FromFile.tellg();
+            if (line.find("[CLICKS] :") != std::string::npos)
+            {
+                std::streampos startPos = FromFile.tellg();
 
-            std::string clicksStr = line.substr(line.find(":") + 1);
-            Clicked = std::stoi(clicksStr);
+                std::string clicksStr = line.substr(line.find(":") + 1);
+                Value = std::stoi(clicksStr);
+            }
         }
     }
+
     FromFile.close();
 
-    return TopScore, Clicked;
+    return Value;
 }
 
 void SetKeyState(const char* Settings)
@@ -155,7 +164,7 @@ void SetKeyState(const char* Settings)
     FrSettings.close();
 }
 
-int StatReset(const char* Stats, int TopScore, int Clicked)
+void StatReset(const char* Stats)
 {
     std::ofstream stats;
     stats.open(Stats);
@@ -168,10 +177,6 @@ int StatReset(const char* Stats, int TopScore, int Clicked)
 
     stats << "[HIGHSCORE] :" << "0" << "\n" << "[CLICKS] :" << "0" << "\n";
     stats.close();
-
-    TopScore = 0;
-    Clicked = 0;
-    return Clicked, TopScore;
 }
 
 void CreateFiles(const char* Stats, const char* Settings, const char* HowToUseFile)
@@ -282,14 +287,14 @@ int main()
     const char* HowToUseFile = "HowToUse.txt";
 
     // Stats
-    int TopScore = 0;
-    int Clicked = 0;
+    int TopScore = SetVariables(Stats, 1);
+    int Clicked = SetVariables(Stats, 2);
 
     // Checks / creates files
     CreateFiles(Stats, Settings, HowToUseFile);
 
     // Sets keys and stats
-    SetVariables(Stats, TopScore, Clicked);
+    // SetVariables(Stats, TopScore, Clicked);
     SetKeyState(Settings);
 
     // Binds
@@ -321,7 +326,9 @@ int main()
 
             if (ResetMessage == IDYES)
             {
-                StatReset(Stats, TopScore, Clicked);
+                StatReset(Stats);
+                TopScore = 0;
+                Clicked = 0;
                 std::cout << "\n" << "Stats reseted successfully!" << "\n";
             }
             else if (ResetMessage == IDNO)
@@ -344,10 +351,13 @@ int main()
                 auto endTime = std::chrono::steady_clock::now();
                 auto duration = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime);
                 std::cout << "Game has ended." << "\n";
-                printDuration(duration);
+                printGameDuration(duration);
                 std::cout << "Total right clicks: " << rightClickCounter << "\n";
                 rounds++;
                 AddStats(rightClickCounter, Stats, Clicked, TopScore);
+
+                TopScore = SetVariables(Stats, 1);
+                Clicked = SetVariables(Stats, 2);
             }
             previousState = currentState;
         }
