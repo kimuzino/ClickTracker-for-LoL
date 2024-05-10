@@ -253,6 +253,21 @@ void CreateFiles(const char* Stats, const char* Settings, const char* HowToUseFi
     }
 }
 
+void ClicksPerMinute(int rightClickCounter, std::chrono::seconds seconds)
+{
+    if (seconds.count() < 60)
+    {
+        std::cout << "Game was too short" << "\n";
+    }
+
+    else
+    {
+        double minutes = seconds.count() / 60.0;
+        double ClicksPerMinute = rightClickCounter / minutes;
+        std::cout << "Clicks per minute: " << std::fixed << std::setprecision(2) << ClicksPerMinute << "\n";
+    }
+}
+
 int main() 
 {
     #define IDI_ICON 101
@@ -353,6 +368,7 @@ int main()
                 std::cout << "Game has ended." << "\n";
                 printGameDuration(duration);
                 std::cout << "Total right clicks: " << rightClickCounter << "\n";
+                ClicksPerMinute(rightClickCounter, duration);
                 rounds++;
                 AddStats(rightClickCounter, Stats, Clicked, TopScore);
 
